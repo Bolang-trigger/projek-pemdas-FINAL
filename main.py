@@ -36,6 +36,9 @@ class LoginPage(ctk.CTkFrame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
+        # username yang akan dikirimkan
+        self.username = ''
+
         # frame utama login
         login_frame = ctk.CTkFrame(self, width=380, height=500, corner_radius=12)
         login_frame.grid(row=0, column=0, padx=(50, 50), pady=(80, 10))
@@ -154,24 +157,24 @@ class LoginPage(ctk.CTkFrame):
 
     def login_button(self):
         # ambil username & password dari input
-        username = self.username_entry.get()
+        self.username = self.username_entry.get()
         password = self.password_entry.get()
 
         # cek data user dari database
         c.execute(
             "select password from users_accounts_data where username = ?",
-            (username,)
+            (self.username,)
         )
         result = c.fetchone()
 
         # jika username tidak kosong
-        if username != "":
+        if self.username != "":
             # jika username dan password benar
             if result:
                 hashed_password = result[0]
 
                 if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
-                    self.controller.show_frame(WeaponShowcaseApp)
+                    self.controller.open_homepage(username=self.username)
 
                 # jika salah
                 else:
@@ -493,7 +496,7 @@ class App(ctk.CTk):
 
         # dictionary untuk menyimpan halaman
         self.frames = {}
-        self.frame_list = [LoginPage, RegisterPage, WeaponShowcaseApp]
+        self.frame_list = [LoginPage, RegisterPage]
         
         # buat dan tampilkan semua halaman, tetapi hanya raise yang aktif
         for F in self.frame_list:
@@ -509,24 +512,35 @@ class App(ctk.CTk):
         frame = self.frames[page]
         frame.tkraise()
 
-    def open_window_payment(self, caller, cart_items, cart_total, format_price_func, weapons_data):        
+    def open_homepage(self, username):
+        homepage = WeaponShowcaseApp(
+            parent=self.container,
+            controller=self,
+            username=username
+        )
+        homepage.grid(row=0, column=0, sticky='nsew')
+        homepage.tkraise()
+
+    def open_window_payment(self, caller, username, cart_items, cart_total, format_price_func, weapons_data):        
         payment = PaymentWindow(
             parent=self.container,
             controller=self,
             caller=caller,
+            username=username,
             cart_items=cart_items,
             cart_total=cart_total,
             format_price_func=format_price_func,
             weapons_data=weapons_data
-            )
+        )
         payment.grid(row=0, column=0, sticky="nsew")
         payment.tkraise()
 
 #kelas WeaponShowcaseApp
 class WeaponShowcaseApp(ctk.CTkFrame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, username):
         super().__init__(parent)
         self.controller = controller
+        self.username = username
         self.weapons_data = all_data  # Ambil data dari variabel global
         self.cart_items = {} # { 'Nama Senjata': {'quantity': X, 'price_per_unit': Y, 'total_price': Z} }
         self.music_player = MusicPlayer() # Inisialisasi MusicPlayer
@@ -782,7 +796,8 @@ class WeaponShowcaseApp(ctk.CTkFrame):
             
         # Panggil fungsi di App untuk membuka frame pembayaran
         self.controller.open_window_payment(
-            caller=self, 
+            caller=self,
+            username=self.username,
             cart_items=self.cart_items, 
             cart_total=sum(item['total_price'] for item in self.cart_items.values()), 
             format_price_func=self._format_price, # Melewatkan fungsi format harga
@@ -970,9 +985,11 @@ class DetailWindow(ctk.CTkToplevel):
 # KELAS PAYMENTWINDOW (CHECKOUT FRAME)
 class PaymentWindow(ctk.CTkFrame):
     """Jendela/Frame Checkout yang menggantikan tampilan utama."""
-    def __init__(self, parent, controller, cart_items, cart_total, format_price_func, weapons_data):
+    def __init__(self, parent, controller, caller, username, cart_items, cart_total, format_price_func, weapons_data):
         super().__init__(parent)
         self.controller = controller
+        self.master_app = caller
+        self.username = username
         self.cart_items = cart_items
         self.initial_cart_total = cart_total
         # Fungsi format_price diambil dari WeaponShowcaseApp
@@ -1036,6 +1053,8 @@ class PaymentWindow(ctk.CTkFrame):
 
     def refresh_display(self):
         """Memuat ulang semua konten keranjang dan total harga."""
+
+        self.cart_items = self.master_app.cart_items
         
         # Kosongkan frame
         for widget in self.main_content_frame.winfo_children():
@@ -1219,6 +1238,8 @@ class PaymentWindow(ctk.CTkFrame):
         receipt = "========================================\n"
         receipt += "       STRUK PEMBAYARAN - GUN ADDICTION\n"
         receipt += "========================================\n"
+        #memanggil nama user menggunakan username
+        receipt += f"nama pembeli: {self.username}\n"
         receipt += f"Tanggal/Waktu: {now}\n"
         receipt += f"ID Transaksi: #{transaction_id}\n"
         receipt += "----------------------------------------\n"
@@ -1314,7 +1335,7 @@ class PaymentWindow(ctk.CTkFrame):
         self.master_app.update_cart_display()
         
         # Kembali ke etalase
-        self.controller.show_frame(WeaponShowcaseApp)
+        self.controller.open_homepage(username=self.username)
         # self.destroy() # Hapus frame pembayaran
 
 # kelas struk

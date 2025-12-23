@@ -476,6 +476,7 @@ class RegisterPage(ctk.CTkFrame):
         # pindah ke halaman login
         self.controller.show_frame(LoginPage)
 
+
 # KELAS UTAMA APLIKASI
 class App(ctk.CTk):
     def __init__(self):
@@ -588,8 +589,6 @@ class WeaponShowcaseApp(ctk.CTkFrame):
         self.music_state_var = ctk.StringVar(value="▶️ Musik")
         self.music_btn = ctk.CTkButton(top_frame, textvariable=self.music_state_var, command=self.toggle_music, fg_color="#C38D9E", width=100)
         self.music_btn.grid(row=0, column=1, padx=5, pady=10) # Position: Col 1
-
-        # --- TOP RIGHT: Search Bar and Filter ---
         
         # Search Bar (Kolom 3, kiri dari group kanan)
         self.search_var = ctk.StringVar()
@@ -1173,6 +1172,20 @@ class PaymentWindow(ctk.CTkFrame):
             price_label = ctk.CTkLabel(item_data_frame, text=self.format_price(data['total_price']), text_color="#00FF7F", font=ctk.CTkFont(size=14, weight="bold"))
             price_label.grid(row=0, column=4, padx=10, sticky="e")
     
+
+
+    def create_payment_selection_section(self, parent_frame):
+        """Membuat bagian untuk memilih metode pembayaran."""
+        payment_label = ctk.CTkLabel(parent_frame, text="Pilih Cara Pembayaran:", font=ctk.CTkFont(size=18, weight="bold"))
+        payment_label.pack(anchor="w", padx=10, pady=(10, 5))
+
+        for category, methods in self.payment_methods.items():
+            category_label = ctk.CTkLabel(parent_frame, text=f"**{category}**", font=ctk.CTkFont(size=15, weight="bold"), text_color="#A8D0E6")
+            category_label.pack(anchor="w", padx=15, pady=(8, 3))
+            for method in methods:
+                method_rb = ctk.CTkRadioButton(parent_frame, text=method, variable=self.selected_payment_method, value=method, font=ctk.CTkFont(size=14))
+                method_rb.pack(anchor="w", padx=25, pady=3)
+
     def update_item_quantity(self, item_name, delta):
         """Memperbarui kuantitas item di keranjang utama dan memuat ulang tampilan."""
         # Mengambil data dari keranjang utama
@@ -1201,18 +1214,6 @@ class PaymentWindow(ctk.CTkFrame):
         self.master_app.update_cart_display() 
         self.refresh_display()
 
-    def create_payment_selection_section(self, parent_frame):
-        """Membuat bagian untuk memilih metode pembayaran."""
-        payment_label = ctk.CTkLabel(parent_frame, text="Pilih Cara Pembayaran:", font=ctk.CTkFont(size=18, weight="bold"))
-        payment_label.pack(anchor="w", padx=10, pady=(10, 5))
-
-        for category, methods in self.payment_methods.items():
-            category_label = ctk.CTkLabel(parent_frame, text=f"**{category}**", font=ctk.CTkFont(size=15, weight="bold"), text_color="#A8D0E6")
-            category_label.pack(anchor="w", padx=15, pady=(8, 3))
-            for method in methods:
-                method_rb = ctk.CTkRadioButton(parent_frame, text=method, variable=self.selected_payment_method, value=method, font=ctk.CTkFont(size=14))
-                method_rb.pack(anchor="w", padx=25, pady=3)
-
     def update_checkout_total(self):
         """Menghitung total hanya dari item yang terpilih (checked)."""
         self.cart_total = 0
@@ -1233,7 +1234,6 @@ class PaymentWindow(ctk.CTkFrame):
         # Contoh ID Transaksi acak
         transaction_id = datetime.now().strftime("%Y%m%d%H%M%S") 
         now = datetime.now().strftime("%d %B %Y %H:%M:%S")
-
         # --- HEADER ---
         receipt = "========================================\n"
         receipt += "       STRUK PEMBAYARAN - GUN ADDICTION\n"
@@ -1243,7 +1243,6 @@ class PaymentWindow(ctk.CTkFrame):
         receipt += f"Tanggal/Waktu: {now}\n"
         receipt += f"ID Transaksi: #{transaction_id}\n"
         receipt += "----------------------------------------\n"
-        
         # --- DETAIL ITEM ---
         receipt += "ITEM YANG DIBELI:\n"
         subtotal_items = 0
@@ -1262,11 +1261,7 @@ class PaymentWindow(ctk.CTkFrame):
             # Format: Nama (Qty x @ Harga Satuan) = Subtotal
             receipt += f"{name}\n"
             receipt += f"   - Qty: {qty} x {price_unit_formatted} = {price_total_formatted}\n"
-            
         receipt += "----------------------------------------\n"
-
-        # --- RINGKASAN HARGA (Hypothetical Diskon) ---
-        
         # Logika Diskon sederhana (0% untuk contoh)
         DISCOUNT_RATE = 0.0 
         discount = int(subtotal_items * DISCOUNT_RATE)
@@ -1290,11 +1285,8 @@ class PaymentWindow(ctk.CTkFrame):
         receipt += "\n========================================\n"
         receipt += "          TERIMA KASIH ATAS KUNJUNGANNYA\n"
         receipt += "========================================\n"
-
         return receipt
     # --- AKHIR FUNGSI BARU ---
-
-
     def process_payment(self):
         selected_method = self.selected_payment_method.get()
         
@@ -1323,20 +1315,16 @@ class PaymentWindow(ctk.CTkFrame):
             self.cart_total, 
             selected_method
         )
-        # --- AKHIR PENGGANTIAN ---
-
 
         # 3. Tampilkan Pesan Sukses MENGGUNAKAN JENDELA KUSTOM
-        ReceiptWindow(self.master_app.controller, receipt_text) # Panggil jendela kustom yang baru
+        ReceiptWindow(self.master_app.controller, receipt_text)
         
         # 4. Update State
-        # Setelah sukses, reset keranjang utama hanya dengan item yang tidak di-checkout (items_to_keep)
         self.master_app.cart_items = items_to_keep
         self.master_app.update_cart_display()
         
         # Kembali ke etalase
         self.controller.open_homepage(username=self.username)
-        # self.destroy() # Hapus frame pembayaran
 
 # kelas struk
 class ReceiptWindow(ctk.CTkToplevel):
@@ -1483,120 +1471,6 @@ class MusicPlayer:
         self.current_music = self.music_files[self.current_index]
         return self.play()
     
-# KELAS MUSICPLAYER (UTILITAS)
-
-class MusicPlayer:
-    def __init__(self, music_dir="music_resource", supported_formats=None):
-        if supported_formats is None:
-            self.supported_formats = ['*.mp3', '*.ogg', '*.wav'] 
-        else:
-            self.supported_formats = supported_formats
-            
-        self.music_dir = os.path.join(os.getcwd(), music_dir)
-        self.music_files = []
-        self._load_default_files()
-        
-        self.current_index = 0
-        self.current_music = self.music_files[0] if self.music_files else None
-        self.is_playing = False
-        self.volume = 0.5 
-        
-        if self.current_music and pygame.mixer.get_init():
-            pygame.mixer.music.set_volume(self.volume)
-
-    def _load_default_files(self):
-        """Memuat file musik dari direktori default."""
-        if not os.path.exists(self.music_dir):
-            print(f"Direktori musik '{self.music_dir}' tidak ditemukan.")
-            return
-
-        self.music_files = []
-        for root, _, files in os.walk(self.music_dir):
-            for pattern in self.supported_formats:
-                for filename in fnmatch.filter(files, pattern):
-                    self.music_files.append(os.path.join(root, filename))
-        
-        if not self.music_files:
-            print("Tidak ada file musik default ditemukan.")
-
-    def add_music_file(self, file_path):
-        """Menambahkan file musik ke playlist"""
-        if file_path and os.path.exists(file_path):
-            if file_path not in self.music_files:
-                self.music_files.append(file_path)
-                if self.current_music is None:
-                    self.current_music = file_path
-                    self.current_index = len(self.music_files) - 1
-                return True
-        return False
-
-    def play(self):
-        """Memulai atau melanjutkan musik"""
-        if not pygame.mixer.get_init():
-            return None # Jangan jalankan jika mixer gagal
-            
-        if not self.music_files:
-            messagebox.showinfo("Info", "Tidak ada file musik. Silakan tambahkan file musik terlebih dahulu.")
-            return None
-        
-        if not self.is_playing:
-            try:
-                if self.current_music is None:
-                    self.current_music = self.music_files[0]
-                    self.current_index = 0
-
-                if not pygame.mixer.music.get_busy():
-                    pygame.mixer.music.load(self.current_music)
-                    pygame.mixer.music.set_volume(self.volume)
-                    pygame.mixer.music.play(-1) # -1 untuk loop tak terbatas
-                else:
-                    pygame.mixer.music.unpause()
-                
-                self.is_playing = True
-                return self.current_music
-            except Exception as e:
-                print(f"Error memutar musik: {e}")
-                messagebox.showerror("Error", f"Gagal memutar musik: {str(e)}")
-                return None
-        return self.current_music
-
-    def pause(self):
-        """Menjeda musik"""
-        if pygame.mixer.get_init() and self.is_playing:
-            pygame.mixer.music.pause()
-            self.is_playing = False
-
-    def stop(self):
-        """Menghentikan musik"""
-        if pygame.mixer.get_init():
-            pygame.mixer.music.stop()
-        self.is_playing = False
-        self.current_music = None
-
-    def set_volume(self, volume):
-        """Mengatur volume"""
-        self.volume = max(0.0, min(1.0, volume))
-        if pygame.mixer.get_init():
-            pygame.mixer.music.set_volume(self.volume)
-
-    def next_track(self):
-        """Pindah ke lagu berikutnya"""
-        if not self.music_files:
-            return None
-        self.stop()
-        self.current_index = (self.current_index + 1) % len(self.music_files)
-        self.current_music = self.music_files[self.current_index]
-        return self.play()
-
-    def previous_track(self):
-        """Pindah ke lagu sebelumnya"""
-        if not self.music_files:
-            return None
-        self.stop()
-        self.current_index = (self.current_index - 1 + len(self.music_files)) % len(self.music_files)
-        self.current_music = self.music_files[self.current_index]
-        return self.play()
-    
     # kelas chatbot
     # KELAS SHOPPING CHATBOT (TOPLEVEL WINDOW)
 class ShoppingChatBot(ctk.CTkToplevel):
@@ -1607,13 +1481,11 @@ class ShoppingChatBot(ctk.CTkToplevel):
         self.resizable(False, False)
         self.transient(master) # Jendela tetap di atas master
         self.master_app = master
-        
         self.colors = {
             "primary": "#41B3A3", "secondary": "#C38D9E", "accent": "#E8A87C", 
             "error": "#F76C6C", "dark_bg": "#1a1a1a", "light_bg": "#2d2d2d", 
             "text_light": "#ffffff", "text_dark": "#cccccc"
         }
-        
         # Mapping untuk Bot Response (Menggunakan data senjata yang dimuat)
         product_categories = {}
         for item in all_data:
@@ -1623,7 +1495,6 @@ class ShoppingChatBot(ctk.CTkToplevel):
                 product_categories[category] = {"items": [], "icon": "❓"}
             if name:
                 product_categories[category]["items"].append(name)
-        
         # Tambahkan ikon default jika Kategori tidak ada/kosong
         for cat in product_categories:
              if 'Pistol' in cat: product_categories[cat]['icon'] = '🛡️'
@@ -1631,9 +1502,7 @@ class ShoppingChatBot(ctk.CTkToplevel):
              elif 'Shotgun' in cat: product_categories[cat]['icon'] = '💣'
              elif 'Serbu' in cat: product_categories[cat]['icon'] = '⚔️'
              elif 'Melee' in cat: product_categories[cat]['icon'] = '🔪'
-             
         self.categories = product_categories
-
         self.setup_ui()
         
     def setup_ui(self):
@@ -1694,8 +1563,6 @@ class ShoppingChatBot(ctk.CTkToplevel):
         qr_frame = ctk.CTkFrame(self, fg_color=self.colors["light_bg"], corner_radius=15)
         qr_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
         qr_frame.grid_columnconfigure(0, weight=1)
-
-
         quick_replies = [
             ("Kategori Produk", "kategori"), 
             ("Metode Pembayaran", "pembayaran"),
@@ -1703,16 +1570,12 @@ class ShoppingChatBot(ctk.CTkToplevel):
             ("Promo Bulan Ini", "promo"),
             ("Legalitas produk", "Legalitas")
         ]
-
-        
-        
         questions_container = ctk.CTkScrollableFrame(
             qr_frame, 
             fg_color="transparent",
             orientation="horizontal",
             height=60
         )
-
         questions_container.pack(fill="x", padx=10, pady=5)
         for i, (text, command) in enumerate(quick_replies):
             btn = ctk.CTkButton(
@@ -1727,8 +1590,7 @@ class ShoppingChatBot(ctk.CTkToplevel):
                 corner_radius=15,
                 command=lambda cmd=command, txt=text: self.handle_quick_reply(cmd, txt)
             )
-            btn.grid(row=0, column=i, padx=5, pady=5, sticky="w")
-        
+            btn.grid(row=0, column=i, padx=5, pady=5, sticky="w") 
         self.chat_entry.focus()
         self.show_welcome_message()
 
@@ -1901,8 +1763,7 @@ class ShoppingChatBot(ctk.CTkToplevel):
             🚚 **GRATIS ONGKIR** min. belanja 
                 Rp 5.000.000
             💳 **CASHBACK 15%** menggunakan e-wallet
-            🎁 **BUNDLE SPECIAL** 
-                senjata + aksesoris
+            🎁 **BUNDLE SPECIAL** senjata + aksesoris
             ⏰ **Promo berlaku hingga akhir bulan!**
             📞 *Hubungi CS untuk klaim promo*"""
 
@@ -1913,8 +1774,7 @@ class ShoppingChatBot(ctk.CTkToplevel):
                  1-2 hari kerja
             📍 **Pulau Jawa:** 2-3 hari kerja
             📍 **Luar Jawa:** 3-7 hari kerja
-            📍 **Same-day delivery** 
-                (area tertentu)
+            📍 **Same-day delivery** (area tertentu)
             🔒 **Packaging aman dan discreet**"""
 
     def get_default_response(self):
